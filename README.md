@@ -482,18 +482,19 @@ Real-robot testing required additional tuning compared with simulation because s
 Developing this project provided practical experience with:
 
 - ROS 2 node development using Python and `rclpy`
-- Publishers and subscribers
-- ROS 2 services and actions
+- Publishers, subscribers, services, and actions
 - Custom ROS 2 interfaces
-- FSM-based robot behaviour
+- FSM-based robot behaviour and control arbitration
 - LiDAR geometry and scan processing
 - Sector-based obstacle-distance estimation
-- Circular scan indexing
-- Hysteresis-based state transitions
-- Proportional reactive control
+- Circular scan indexing and wrap-aware processing
+- Hysteresis-based state transitions for reducing behavioural oscillations
+- Proportional reactive control for front-obstacle avoidance
+- ROS 2 executor architecture and callback scheduling
+- Debugging callback-concurrency issues in reactive robot controllers
 - Odometry recording
 - Simulation-to-real-world testing
-- Debugging and tuning robotic behaviours
+- Systematic debugging and tuning of robotic behaviours
 
 ## Future Improvements
 
