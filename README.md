@@ -77,6 +77,121 @@ This structure separates the wall-finding process into manageable stages and mak
 
 ![Finite State Machine diagram](assets/diagrams/FSM.png)
 
+## Design Decisions and Engineering Rationale
+
+The controller evolved through practical testing and debugging. Several design decisions were introduced to improve behavioural stability, handle sensor fluctuations, and make the robot's execution more reliable.
+
+### 1. Why a Finite State Machine (FSM)?
+
+**Problem**
+
+A wall-following robot must perform different behaviours depending on its surroundings. For example, it needs to follow the wall under normal conditions but respond differently when an obstacle appears in front of it.
+
+If these behaviours independently attempt to control the robot at the same time, their decisions can conflict. Competing linear and angular velocity commands can produce unpredictable movement.
+
+**Solution**
+
+A Finite State Machine (FSM) was used to organise the robot's behaviour into explicit states.
+
+The controller can distinguish between different behaviours and transition between them according to sensor conditions.
+
+This establishes a clear behavioural structure in which the controller selects the appropriate behaviour for the current situation.
+
+**Why this matters**
+
+- Prevents conflicting behavioural decisions when the FSM is used as the control-arbitration mechanism.
+- Makes transitions between wall finding, alignment, wall following, and obstacle handling easier to reason about.
+- Improves the predictability and maintainability of the controller.
+- Makes debugging easier because the robot's current behavioural state can be inspected.
+
+The objective is to have one active behavioural state at a time, with a clearly defined transition when another behaviour is required.
+
+### 2. Why Hysteresis Was Introduced
+
+**Problem**
+
+LiDAR measurements can fluctuate because of sensor noise, surface geometry, and small changes in the robot's position.
+
+When a controller uses a single threshold to switch between behaviours, even a small measurement fluctuation around that threshold can repeatedly trigger state transitions.
+
+For example, if the measured front-obstacle distance fluctuates around a threshold, the controller may repeatedly switch between normal wall following and obstacle avoidance.
+
+This rapid switching can cause jittery movement and unstable behaviour.
+
+**Solution**
+
+Hysteresis was introduced to reduce unnecessary switching between states.
+
+Instead of using the same threshold for entering and leaving a condition, hysteresis uses separate transition thresholds.
+
+For example:
+
+- Enter obstacle-avoidance behaviour when the measured distance falls below an entry threshold.
+- Remain in that behaviour while the distance fluctuates within the hysteresis band.
+- Return to normal wall following only when the distance crosses the appropriate exit threshold.
+
+The exact thresholds depend on the controller's implementation and configuration.
+
+**Why this matters**
+
+- Reduces rapid switching caused by small LiDAR fluctuations.
+- Helps prevent unnecessary changes in robot behaviour.
+- Produces smoother transitions between behavioural states.
+- Improves the stability of threshold-based reactive control.
+
+Hysteresis does not eliminate sensor noise. Instead, it makes the controller less sensitive to small fluctuations around its decision boundaries.
+
+### 3. Why Proportional Control Was Introduced
+
+**Problem**
+
+Using fixed turning speeds for front-obstacle avoidance can produce abrupt responses.
+
+A fixed-speed controller does not vary its turning response according to how close the obstacle is, potentially leading to unnecessarily aggressive corrections or oscillatory behaviour.
+
+**Solution**
+
+Proportional control was introduced for front-obstacle avoidance.
+
+Rather than relying exclusively on a fixed turning response, the controller adjusts its response according to the measured obstacle distance and the configured control logic.
+
+The FSM continues to organise the robot's behaviour, while proportional control provides a distance-dependent response within the relevant behaviour.
+
+**Why this matters**
+
+- Allows the turning response to vary with obstacle distance.
+- Helps produce smoother obstacle-avoidance behaviour.
+- Complements the FSM and hysteresis-based transitions.
+- Reduces reliance on a single fixed turning speed.
+
+The proportional controller is used for front-obstacle avoidance, while threshold-based wall following remains part of the overall control strategy.
+
+### 4. Why a MultiThreadedExecutor Was Introduced
+
+**Problem**
+
+During extended wall-following runs, the robot gradually deviated from its intended path.
+
+Investigation revealed an issue involving the execution of callbacks associated with wall-finding and wall-following behaviour.
+
+This highlighted the importance of understanding how ROS 2 schedules callbacks and how callback execution affects a reactive controller.
+
+**Solution**
+
+After investigating ROS 2 executor behaviour, the implementation was updated to use a `MultiThreadedExecutor`.
+
+This allowed eligible callbacks to execute concurrently and resolved the observed behaviour in the tested configuration.
+
+**Why this matters**
+
+- Improves understanding of callback scheduling in ROS 2.
+- Helps address execution bottlenecks when callbacks need to make progress independently.
+- Demonstrates that robot instability can originate from software execution architecture, not just control parameters or sensor measurements.
+
+A multi-threaded executor does not automatically make every callback concurrent. Actual concurrency depends on callback groups and executor configuration, and shared data must be handled safely.
+
+This debugging experience reinforced the importance of considering execution behaviour alongside perception and control when diagnosing robotic systems.
+
 ### Hybrid Controller Architecture
 
 The advanced wall-following controller combines multiple techniques:
