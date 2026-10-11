@@ -142,6 +142,14 @@ Wrap-aware slicing ensures that sectors crossing the circular scan boundary are 
 
 **Solution:** Introduced proportional control for front-obstacle avoidance while retaining threshold-based wall following for the main behaviour.
 
+### 5. Callback Execution and Concurrency Issues
+
+**Challenge:** During extended wall-following runs, the robot gradually deviated from its intended path. Investigation revealed that the execution of callbacks associated with wall-following and wall-finding behaviour was affecting the robot's control response.
+
+**Solution:** After investigating ROS 2 callback execution and executor behaviour, the implementation was updated to use a `MultiThreadedExecutor`. This allowed eligible callbacks to execute concurrently, improving responsiveness and resolving the observed behaviour.
+
+**Key takeaway:** In ROS 2, callback execution depends on the executor, callback groups, and how callbacks are scheduled. A multi-threaded executor alone does not guarantee concurrent execution of every callback; callback groups and shared-state access must also be configured appropriately.
+
 ## Technologies Used
 
 - ROS 2 Humble
