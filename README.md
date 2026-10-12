@@ -313,9 +313,9 @@ cd ~/ros2_ws/src
 Clone the three repositories:
 
 ```bash
-git clone <WALL_FOLLOWER_REPOSITORY_URL>
-git clone <CUSTOM_INTERFACES_REPOSITORY_URL>
-git clone <LIDAR_UTILS_REPOSITORY_URL>
+git clone https://github.com/JcNavjot/wall_follower_turtlebot.git
+git clone https://github.com/JcNavjot/ros2-common-interfaces.git
+git clone https://github.com/JcNavjot/ros2-lidar-utils.git
 ```
 
 Replace the placeholders with the actual GitHub repository URLs.
